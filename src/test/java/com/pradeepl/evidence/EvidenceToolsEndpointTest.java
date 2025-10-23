@@ -1,4 +1,4 @@
-package com.example.evidence;
+package com.pradeepl.evidence;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

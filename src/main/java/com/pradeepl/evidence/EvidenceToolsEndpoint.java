@@ -1,4 +1,4 @@
-package com.example.evidence;
+package com.pradeepl.evidence;
 
 import akka.javasdk.annotations.Acl;
 import akka.javasdk.annotations.Description;
