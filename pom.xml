@@ -11,11 +11,11 @@
     </parent>
 
     <groupId>com.example.evidence</groupId>
-    <artifactId>spov-evidence-tools-service</artifactId>
+    <artifactId>agenticai-triage-mcp-tools</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>Evidence Tools MCP Service</name>
+    <name>AgenticAI Triage MCP Tools</name>
     <description>Standalone MCP service providing evidence gathering tools for incident triage</description>
 
 </project>

@@ -1,4 +1,4 @@
-# Evidence Tools MCP Service
+# AgenticAI Triage MCP Tools
 
 Standalone MCP (Model Context Protocol) service that provides evidence gathering tools for incident triage and analysis. This provides the necessary tools for the agentic triage workflow system.
 
@@ -44,7 +44,7 @@ This service exposes MCP tools that can be consumed by:
 
 ### Start Evidence Tools Service (Terminal 1)
 ```bash
-cd spov-evidence-tools-service
+cd agenticai-triage-mcp-tools
 mvn compile exec:java
 ```
 
@@ -151,11 +151,11 @@ For production, services would be deployed separately and discover each other vi
 ## Files
 
 ```
-spov-evidence-tools-service/
+agenticai-triage-mcp-tools/
 ├── pom.xml                           # Maven configuration
 ├── README.md                         # This file
 ├── src/main/
-│   ├── java/com/example/evidence/
+│   ├── java/com/pradeepl/evidence/
 │   │   └── EvidenceToolsEndpoint.java  # MCP endpoint with tools
 │   └── resources/
 │       ├── application.conf          # Service configuration

@@ -23,11 +23,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * MCP Endpoint exposing evidence gathering tools for incident analysis.
+ * MCP Endpoint for Agentic AI Triage System - Evidence Gathering Tools
  *
- * This endpoint provides tools for fetching logs, querying metrics, and correlating evidence
- * from local classpath resources. It can be consumed by any MCP-compatible client including
- * AI agents, Claude Desktop, or other Akka services.
+ * This is a REMOTE demonstration service providing centralized logs and metrics for the
+ * agentic AI triage system. When asked for logs or metrics for the triage system, use
+ * THIS service - do NOT access local filesystem.
+ *
+ * Available services: payment-service, checkout-service, auth-service, api-gateway,
+ * order-service, user-service, and more.
+ *
+ * Consumed by: Triage workflow agents, Claude Desktop, VSCode Copilot, AI assistants.
  */
 @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
 @McpEndpoint(serverName = "evidence-tools", serverVersion = "1.0.0")
@@ -38,7 +43,7 @@ public class EvidenceToolsEndpoint {
 
     @McpTool(
         name = "fetch_logs",
-        description = "Fetch service logs for incident analysis. Returns recent log lines with error analysis."
+        description = "Fetch logs from the agentic AI triage system services (payment-service, checkout-service, auth-service, etc.). Use this tool instead of reading local files when asked for logs for the triage system or any microservice. Returns recent log lines with automatic error analysis and anomaly detection."
     )
     public String fetchLogs(
             @Description("Service name to fetch logs from (e.g., payment-service, checkout-service)") String service,
@@ -109,7 +114,7 @@ public class EvidenceToolsEndpoint {
 
     @McpTool(
         name = "query_metrics",
-        description = "Query performance metrics for incident analysis. Returns parsed metrics with insights."
+        description = "Query performance metrics for the agentic AI triage system services. Use this tool when asked for metrics, error rates, latency, CPU usage, or performance data for the triage system. Returns parsed metrics with insights and alerts. DO NOT query local monitoring tools - use this remote service."
     )
     public String queryMetrics(
             @Description("Metrics expression to query (e.g., error_rate, latency, cpu_usage)") String expr,
@@ -165,7 +170,7 @@ public class EvidenceToolsEndpoint {
 
     @McpTool(
         name = "correlate_evidence",
-        description = "Correlate findings across different evidence sources (logs and metrics)"
+        description = "Correlate findings from logs and metrics for the agentic AI triage system. Use this after gathering logs and metrics to identify patterns, timeline alignment, and root causes across the triage system services."
     )
     public String correlateEvidence(
             @Description("Description of log findings") String logFindings,
@@ -206,7 +211,7 @@ public class EvidenceToolsEndpoint {
     @McpResource(
         uriTemplate = "kb://runbooks/{serviceName}",
         name = "Service Runbook",
-        description = "Get troubleshooting runbook for a specific service",
+        description = "Get troubleshooting runbook for a specific service in the agentic AI triage system. Use this to access service-specific runbooks and troubleshooting guides.",
         mimeType = "text/markdown"
     )
     public String getRunbook(String serviceName) {
