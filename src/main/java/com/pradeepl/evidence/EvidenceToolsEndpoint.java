@@ -10,6 +10,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import com.pradeepl.evidence.util.McpLogger;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,6 +51,12 @@ public class EvidenceToolsEndpoint {
             @Description("Service name to fetch logs from (e.g., payment-service, checkout-service)") String service,
             @Description("Number of log lines to fetch (default: 200)") int lines
     ) {
+        // Log the incoming MCP tool call
+        McpLogger.logToolCall("fetch_logs", Map.of(
+            "service", service,
+            "lines", lines
+        ));
+
         logger.info("📝 MCP Tool: fetch_logs called - Service: {}, Lines: {}", service, lines);
 
         try {
@@ -59,7 +67,11 @@ public class EvidenceToolsEndpoint {
                 ObjectNode errorResponse = mapper.createObjectNode();
                 errorResponse.put("error", String.format("No log file found for service: %s", service));
                 errorResponse.put("service", service);
-                return mapper.writeValueAsString(errorResponse);
+                String response = mapper.writeValueAsString(errorResponse);
+
+                // Log the error response
+                McpLogger.logToolResponse("fetch_logs", response, false);
+                return response;
             }
 
             String fullLogs = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
@@ -97,17 +109,29 @@ public class EvidenceToolsEndpoint {
             logger.debug("📝 fetch_logs completed - Errors: {}, Patterns: {}",
                 analysis.errorCount, analysis.errorPatterns.size());
 
-            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
+            String jsonResponse = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
+
+            // Log the successful response
+            McpLogger.logToolResponse("fetch_logs", jsonResponse, true);
+
+            return jsonResponse;
 
         } catch (Exception e) {
             logger.error("📝 Error in fetch_logs", e);
+            McpLogger.logError("fetch_logs", e);
             try {
                 ObjectNode errorResponse = mapper.createObjectNode();
                 errorResponse.put("error", "Failed to fetch logs: " + e.getMessage());
                 errorResponse.put("service", service);
-                return mapper.writeValueAsString(errorResponse);
+                String response = mapper.writeValueAsString(errorResponse);
+
+                // Log the error response
+                McpLogger.logToolResponse("fetch_logs", response, false);
+                return response;
             } catch (Exception jsonError) {
-                return String.format("{\"error\":\"Failed to fetch logs: %s\"}", e.getMessage());
+                String fallbackResponse = String.format("{\"error\":\"Failed to fetch logs: %s\"}", e.getMessage());
+                McpLogger.logToolResponse("fetch_logs", fallbackResponse, false);
+                return fallbackResponse;
             }
         }
     }
@@ -120,6 +144,12 @@ public class EvidenceToolsEndpoint {
             @Description("Metrics expression to query (e.g., error_rate, latency, cpu_usage)") String expr,
             @Description("Time range for the query (e.g., 1h, 30m, 5m)") String range
     ) {
+        // Log the incoming MCP tool call
+        McpLogger.logToolCall("query_metrics", Map.of(
+            "expr", expr,
+            "range", range
+        ));
+
         logger.info("📊 MCP Tool: query_metrics called - Expr: {}, Range: {}", expr, range);
 
         try {
@@ -131,7 +161,11 @@ public class EvidenceToolsEndpoint {
                 errorResponse.put("error", String.format("No metrics file found for query: %s", expr));
                 errorResponse.put("expr", expr);
                 errorResponse.put("range", range);
-                return mapper.writeValueAsString(errorResponse);
+                String response = mapper.writeValueAsString(errorResponse);
+
+                // Log the error response
+                McpLogger.logToolResponse("query_metrics", response, false);
+                return response;
             }
 
             String metricsJson = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
@@ -152,18 +186,30 @@ public class EvidenceToolsEndpoint {
 
             logger.debug("📊 query_metrics completed - Insights: {}", insights.size());
 
-            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
+            String jsonResponse = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
+
+            // Log the successful response
+            McpLogger.logToolResponse("query_metrics", jsonResponse, true);
+
+            return jsonResponse;
 
         } catch (Exception e) {
             logger.error("📊 Error in query_metrics", e);
+            McpLogger.logError("query_metrics", e);
             try {
                 ObjectNode errorResponse = mapper.createObjectNode();
                 errorResponse.put("error", "Failed to query metrics: " + e.getMessage());
                 errorResponse.put("expr", expr);
                 errorResponse.put("range", range);
-                return mapper.writeValueAsString(errorResponse);
+                String response = mapper.writeValueAsString(errorResponse);
+
+                // Log the error response
+                McpLogger.logToolResponse("query_metrics", response, false);
+                return response;
             } catch (Exception jsonError) {
-                return String.format("{\"error\":\"Failed to query metrics: %s\"}", e.getMessage());
+                String fallbackResponse = String.format("{\"error\":\"Failed to query metrics: %s\"}", e.getMessage());
+                McpLogger.logToolResponse("query_metrics", fallbackResponse, false);
+                return fallbackResponse;
             }
         }
     }
@@ -176,6 +222,12 @@ public class EvidenceToolsEndpoint {
             @Description("Description of log findings") String logFindings,
             @Description("Description of metric findings") String metricFindings
     ) {
+        // Log the incoming MCP tool call
+        McpLogger.logToolCall("correlate_evidence", Map.of(
+            "logFindings", logFindings,
+            "metricFindings", metricFindings
+        ));
+
         logger.info("🔗 MCP Tool: correlate_evidence called");
 
         try {
@@ -200,11 +252,20 @@ public class EvidenceToolsEndpoint {
             response.set("potentialCorrelations", correlation);
             response.set("confidence", confidence);
 
-            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
+            String jsonResponse = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(response);
+
+            // Log the successful response
+            McpLogger.logToolResponse("correlate_evidence", jsonResponse, true);
+
+            return jsonResponse;
 
         } catch (Exception e) {
             logger.error("🔗 Error in correlate_evidence", e);
-            return String.format("{\"error\":\"Failed to correlate evidence: %s\"}", e.getMessage());
+            McpLogger.logError("correlate_evidence", e);
+
+            String fallbackResponse = String.format("{\"error\":\"Failed to correlate evidence: %s\"}", e.getMessage());
+            McpLogger.logToolResponse("correlate_evidence", fallbackResponse, false);
+            return fallbackResponse;
         }
     }
 
@@ -213,6 +274,9 @@ public class EvidenceToolsEndpoint {
         description = "Get the complete list of known services for accurate incident classification. Returns all available services organized by categories with domain mappings and usage instructions."
     )
     public String getKnownServices() {
+        // Log the incoming MCP tool call (no parameters)
+        McpLogger.logToolCall("get_known_services", Map.of());
+
         logger.info("🔧 MCP Tool: get_known_services called");
 
         try {
@@ -257,14 +321,23 @@ public class EvidenceToolsEndpoint {
                 response.append(instructions.asText());
             }
             
-            logger.debug("🔧 get_known_services completed - {} services loaded", 
+            logger.debug("🔧 get_known_services completed - {} services loaded",
                 services != null ? services.size() : 0);
-            
-            return response.toString();
-            
+
+            String textResponse = response.toString();
+
+            // Log the successful response
+            McpLogger.logToolResponse("get_known_services", textResponse, true);
+
+            return textResponse;
+
         } catch (Exception e) {
             logger.error("🔧 Error in get_known_services", e);
-            return String.format("Error loading services configuration: %s", e.getMessage());
+            McpLogger.logError("get_known_services", e);
+
+            String errorResponse = String.format("Error loading services configuration: %s", e.getMessage());
+            McpLogger.logToolResponse("get_known_services", errorResponse, false);
+            return errorResponse;
         }
     }
 
@@ -275,6 +348,9 @@ public class EvidenceToolsEndpoint {
         mimeType = "text/markdown"
     )
     public String getRunbook(String serviceName) {
+        // Log the incoming MCP resource access
+        McpLogger.logResourceAccess("kb://runbooks/" + serviceName, "Service Runbook", serviceName);
+
         logger.info("📚 MCP Resource: getRunbook called - Service: {}", serviceName);
 
         try {
@@ -282,14 +358,25 @@ public class EvidenceToolsEndpoint {
             InputStream in = getClass().getClassLoader().getResourceAsStream(path);
 
             if (in == null) {
-                return String.format("# Runbook Not Found\n\nNo runbook available for service: %s", serviceName);
+                String notFoundResponse = String.format("# Runbook Not Found\n\nNo runbook available for service: %s", serviceName);
+                McpLogger.logResourceResponse("kb://runbooks/" + serviceName, notFoundResponse.length(), false);
+                return notFoundResponse;
             }
 
-            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            String runbookContent = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+
+            // Log the successful resource response
+            McpLogger.logResourceResponse("kb://runbooks/" + serviceName, runbookContent.length(), true);
+
+            return runbookContent;
 
         } catch (Exception e) {
             logger.error("📚 Error in getRunbook", e);
-            return String.format("# Error\n\nFailed to load runbook: %s", e.getMessage());
+            McpLogger.logError("getRunbook", e);
+
+            String errorResponse = String.format("# Error\n\nFailed to load runbook: %s", e.getMessage());
+            McpLogger.logResourceResponse("kb://runbooks/" + serviceName, errorResponse.length(), false);
+            return errorResponse;
         }
     }
 
