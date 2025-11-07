@@ -208,6 +208,66 @@ public class EvidenceToolsEndpoint {
         }
     }
 
+    @McpTool(
+        name = "get_known_services",
+        description = "Get the complete list of known services for accurate incident classification. Returns all available services organized by categories with domain mappings and usage instructions."
+    )
+    public String getKnownServices() {
+        logger.info("🔧 MCP Tool: get_known_services called");
+
+        try {
+            InputStream inputStream = getClass().getClassLoader().getResourceAsStream("services.json");
+            
+            if (inputStream == null) {
+                ObjectNode errorResponse = mapper.createObjectNode();
+                errorResponse.put("error", "services.json configuration file not found");
+                return mapper.writeValueAsString(errorResponse);
+            }
+            
+            String servicesJson = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            JsonNode config = mapper.readTree(servicesJson);
+            
+            // Build formatted response
+            StringBuilder response = new StringBuilder();
+            response.append("Known Services List:\n");
+            
+            JsonNode services = config.get("services");
+            if (services != null && services.isArray()) {
+                List<String> serviceList = new ArrayList<>();
+                services.forEach(service -> serviceList.add(service.asText()));
+                response.append(String.join(", ", serviceList));
+            }
+            
+            response.append("\n\nService Categories:\n");
+            JsonNode categories = config.get("categories");
+            if (categories != null) {
+                categories.fieldNames().forEachRemaining(categoryName -> {
+                    JsonNode categoryServices = categories.get(categoryName);
+                    if (categoryServices.isArray()) {
+                        List<String> categoryList = new ArrayList<>();
+                        categoryServices.forEach(service -> categoryList.add(service.asText()));
+                        response.append(String.format("- %s: %s\n", categoryName, String.join(", ", categoryList)));
+                    }
+                });
+            }
+            
+            response.append("\n");
+            JsonNode instructions = config.get("usage_instructions");
+            if (instructions != null) {
+                response.append(instructions.asText());
+            }
+            
+            logger.debug("🔧 get_known_services completed - {} services loaded", 
+                services != null ? services.size() : 0);
+            
+            return response.toString();
+            
+        } catch (Exception e) {
+            logger.error("🔧 Error in get_known_services", e);
+            return String.format("Error loading services configuration: %s", e.getMessage());
+        }
+    }
+
     @McpResource(
         uriTemplate = "kb://runbooks/{serviceName}",
         name = "Service Runbook",
