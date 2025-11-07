@@ -5,6 +5,7 @@ import akka.javasdk.annotations.Description;
 import akka.javasdk.annotations.mcp.McpEndpoint;
 import akka.javasdk.annotations.mcp.McpResource;
 import akka.javasdk.annotations.mcp.McpTool;
+import akka.javasdk.mcp.AbstractMcpEndpoint;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,7 +39,7 @@ import java.util.regex.Pattern;
  */
 @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
 @McpEndpoint(serverName = "evidence-tools", serverVersion = "1.0.0")
-public class EvidenceToolsEndpoint {
+public class EvidenceToolsEndpoint extends AbstractMcpEndpoint {
 
     private static final Logger logger = LoggerFactory.getLogger(EvidenceToolsEndpoint.class);
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -58,6 +59,64 @@ public class EvidenceToolsEndpoint {
         ));
 
         logger.info("📝 MCP Tool: fetch_logs called - Service: {}, Lines: {}", service, lines);
+
+        // Demonstrate McpRequestContext usage - access to security, tracing, and headers
+        try {
+            var ctx = requestContext();
+
+            // Access distributed tracing information via OpenTelemetry
+            ctx.tracing().parentSpan().ifPresentOrElse(
+                span -> logger.info("🔍 Request Context - TraceId: {}, SpanId: {}",
+                    span.getSpanContext().getTraceId(),
+                    span.getSpanContext().getSpanId()),
+                () -> logger.debug("🔍 Request Context - No tracing span available")
+            );
+
+            // Access principal information (who's calling this)
+            var principals = ctx.getPrincipals();
+            if (principals.isInternet()) {
+                logger.info("👤 Request Context - Principal: INTERNET");
+            } else if (principals.isSelf()) {
+                logger.info("👤 Request Context - Principal: SELF");
+            } else if (principals.isBackoffice()) {
+                logger.info("👤 Request Context - Principal: BACKOFFICE");
+            } else if (principals.isAnyLocalService()) {
+                principals.getLocalService().ifPresent(
+                    serviceName -> logger.info("👤 Request Context - Principal: LOCAL_SERVICE ({})", serviceName)
+                );
+            } else {
+                logger.info("👤 Request Context - Principal: {} principals", principals.get().size());
+            }
+
+            // Check for custom headers (useful for API keys, request IDs, etc.)
+            ctx.requestHeader("X-Request-ID").ifPresentOrElse(
+                header -> logger.info("📋 Request Context - Custom Header X-Request-ID: {}", header.value()),
+                () -> logger.debug("📋 Request Context - No X-Request-ID header present")
+            );
+
+            ctx.requestHeader("X-API-Key").ifPresentOrElse(
+                header -> logger.info("🔑 Request Context - API Key present: ***{}",
+                    header.value().substring(Math.max(0, header.value().length() - 4))), // Last 4 chars only
+                () -> logger.debug("🔑 Request Context - No X-API-Key header present")
+            );
+
+            // Access all headers - useful for debugging
+            var allHeaders = ctx.allRequestHeaders();
+            logger.debug("📊 Request Context - Total headers: {}", allHeaders.size());
+
+            // Check JWT claims if available
+            try {
+                var jwtClaims = ctx.getJwtClaims();
+                logger.info("🎫 Request Context - JWT claims available: subject={}, issuer={}",
+                    jwtClaims.subject().orElse("N/A"),
+                    jwtClaims.issuer().orElse("N/A"));
+            } catch (Exception jwtEx) {
+                logger.debug("🎫 Request Context - No JWT claims available");
+            }
+
+        } catch (Exception e) {
+            logger.warn("⚠️ Could not access request context: {}", e.getMessage());
+        }
 
         try {
             String fileName = String.format("logs/%s.log", service);
