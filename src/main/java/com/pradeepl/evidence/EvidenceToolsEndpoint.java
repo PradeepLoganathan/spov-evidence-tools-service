@@ -5,6 +5,7 @@ import akka.javasdk.annotations.Description;
 import akka.javasdk.annotations.mcp.McpEndpoint;
 import akka.javasdk.annotations.mcp.McpResource;
 import akka.javasdk.annotations.mcp.McpTool;
+import akka.javasdk.annotations.mcp.ToolAnnotation;
 import akka.javasdk.mcp.AbstractMcpEndpoint;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -46,7 +47,13 @@ public class EvidenceToolsEndpoint extends AbstractMcpEndpoint {
 
     @McpTool(
         name = "fetch_logs",
-        description = "Fetch logs from the agentic AI triage system services (payment-service, checkout-service, auth-service, etc.). Use this tool instead of reading local files when asked for logs for the triage system or any microservice. Returns recent log lines with automatic error analysis and anomaly detection."
+        description = "Fetch logs from the agentic AI triage system services (payment-service, checkout-service, auth-service, etc.). Use this tool instead of reading local files when asked for logs for the triage system or any microservice. Returns recent log lines with automatic error analysis and anomaly detection.",
+        annotations = {
+            ToolAnnotation.ReadOnly,
+            ToolAnnotation.NonDestructive,
+            ToolAnnotation.Idempotent,
+            ToolAnnotation.ClosedWorld
+        }
     )
     public String fetchLogs(
             @Description("Service name to fetch logs from (e.g., payment-service, checkout-service)") String service,
@@ -197,7 +204,13 @@ public class EvidenceToolsEndpoint extends AbstractMcpEndpoint {
 
     @McpTool(
         name = "query_metrics",
-        description = "Query performance metrics for the agentic AI triage system services. Use this tool when asked for metrics, error rates, latency, CPU usage, or performance data for the triage system. Returns parsed metrics with insights and alerts. DO NOT query local monitoring tools - use this remote service."
+        description = "Query performance metrics for the agentic AI triage system services. Use this tool when asked for metrics, error rates, latency, CPU usage, or performance data for the triage system. Returns parsed metrics with insights and alerts. DO NOT query local monitoring tools - use this remote service.",
+        annotations = {
+            ToolAnnotation.ReadOnly,
+            ToolAnnotation.NonDestructive,
+            ToolAnnotation.Idempotent,
+            ToolAnnotation.ClosedWorld
+        }
     )
     public String queryMetrics(
             @Description("Metrics expression to query (e.g., error_rate, latency, cpu_usage)") String expr,
@@ -275,7 +288,12 @@ public class EvidenceToolsEndpoint extends AbstractMcpEndpoint {
 
     @McpTool(
         name = "correlate_evidence",
-        description = "Correlate findings from logs and metrics for the agentic AI triage system. Use this after gathering logs and metrics to identify patterns, timeline alignment, and root causes across the triage system services."
+        description = "Correlate findings from logs and metrics for the agentic AI triage system. Use this after gathering logs and metrics to identify patterns, timeline alignment, and root causes across the triage system services.",
+        annotations = {
+            ToolAnnotation.ReadOnly,
+            ToolAnnotation.NonDestructive,
+            ToolAnnotation.NonIdempotent  // Analysis may vary based on context
+        }
     )
     public String correlateEvidence(
             @Description("Description of log findings") String logFindings,
@@ -330,7 +348,13 @@ public class EvidenceToolsEndpoint extends AbstractMcpEndpoint {
 
     @McpTool(
         name = "get_known_services",
-        description = "Get the complete list of known services for accurate incident classification. Returns all available services organized by categories with domain mappings and usage instructions."
+        description = "Get the complete list of known services for accurate incident classification. Returns all available services organized by categories with domain mappings and usage instructions.",
+        annotations = {
+            ToolAnnotation.ReadOnly,
+            ToolAnnotation.NonDestructive,
+            ToolAnnotation.Idempotent,
+            ToolAnnotation.ClosedWorld
+        }
     )
     public String getKnownServices() {
         // Log the incoming MCP tool call (no parameters)
